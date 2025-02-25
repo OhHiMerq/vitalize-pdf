@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import { PDFDocument } from "pdf-lib";
+import { z } from "zod";
 
 async function main() {
   try {
@@ -12,18 +13,40 @@ async function main() {
     const pdfDoc = await PDFDocument.load(bytes);
     const metadata = JSON.parse(argv[4]);
 
-    console.log("metadata:", metadata);
+    const metadataSchema = z.object({
+      title: z.string().optional(),
+      author: z.number().optional(),
+      subject: z.string().optional(),
+      keywords: z.array(z.string()).optional(),
+      producer: z.string().optional(),
+      creator: z.string().optional(),
+      creationDate: z.coerce.date().optional(),
+      modificationDate: z.coerce.date().optional(),
+    });
+
+    const data = metadataSchema.parse(metadata);
+    const {
+      title,
+      author,
+      subject,
+      keywords,
+      producer,
+      creator,
+      creationDate,
+      modificationDate,
+    } = data;
+
+    console.log("metadata:", data);
     console.log("Writing metadata...");
 
-    if (metadata.title) pdfDoc.setTitle(metadata.title);
-    if (metadata.author) pdfDoc.setAuthor(metadata.author);
-    if (metadata.subject) pdfDoc.setSubject(metadata.subject);
-    if (metadata.keywords) pdfDoc.setKeywords(metadata.keywords);
-    if (metadata.producer) pdfDoc.setProducer(metadata.producer);
-    if (metadata.creator) pdfDoc.setCreator(metadata.creator);
-    if (metadata.creationDate) pdfDoc.setCreationDate(metadata.creationDate);
-    if (metadata.ModificationDate)
-      pdfDoc.setModificationDate(metadata.ModificationDate);
+    if (title) pdfDoc.setTitle(title);
+    if (author) pdfDoc.setAuthor(author);
+    if (subject) pdfDoc.setSubject(subject);
+    if (keywords) pdfDoc.setKeywords(keywords);
+    if (producer) pdfDoc.setProducer(producer);
+    if (creator) pdfDoc.setCreator(creator);
+    if (creationDate) pdfDoc.setCreationDate(creationDate);
+    if (modificationDate) pdfDoc.setModificationDate(modificationDate);
 
     const pdfBytes = await pdfDoc.save();
 
